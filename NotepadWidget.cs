@@ -1,6 +1,9 @@
 using System;
-using Sandbox.UI;
 using System.Text.RegularExpressions;
+using Editor;
+using Sandbox;
+using Sandbox.Services;
+using Sandbox.UI;
 using Button = Editor.Button;
 using FileSystem = Sandbox.FileSystem;
 using Label = Editor.Label;
@@ -20,7 +23,7 @@ public class NotepadWidget : Widget
 
 	private string workingFile;
 
-	private Vector2 MaxDialogWindowSize = new Vector2( 355, 120 );
+	private Vector2 DialogWindowSize = new Vector2( 355, 120 );
 	
 	public NotepadWidget(Widget parent) : base(parent, true)
 	{
@@ -71,16 +74,22 @@ public class NotepadWidget : Widget
 	private void CreateNoteDialog()
 	{
 		createNoteDialog = new Dialog( this );
-		createNoteDialog.WindowTitle = "Create Note";
+		createNoteDialog.WindowTitle = "Create Note"; // Doesn't work for some reason...
 		createNoteDialog.SetStyles( "color: white; font-weight: 600;" );
 		
 		var layout = createNoteDialog.Layout = Layout.Column();
-
+		layout.Margin = 4;
+		layout.Spacing = 4;
+		
+		var labelNoteName = layout.Add( new Label("Note Name:", this ) );
+		labelNoteName.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
+		
 		var textNoteName = layout.Add( new LineEdit( this ) );
+		textNoteName.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
 		textNoteName.Alignment = TextFlag.Center;
 		textNoteName.PlaceholderText = "My New Note";
 		
-		var createButton =  layout.Add( new Button( "Create", this ) );
+		var createButton = layout.Add( new Button( "Create", this ) );
 		textNoteName.SetSizeMode( SizeMode.Default, SizeMode.Ignore );
 		createButton.Clicked += () =>
 		{
@@ -88,7 +97,7 @@ public class NotepadWidget : Widget
 			var pattern =
 				@"^[\w\-. ]+$";
 			
-			if (Regex.IsMatch( text, pattern ))
+			if (!string.IsNullOrEmpty(text) && Regex.IsMatch( text, pattern ))
 			{
 				Save(textNoteName.Text, String.Empty);
 				RefreshListView();
@@ -97,11 +106,12 @@ public class NotepadWidget : Widget
 			}
 			else
 			{
-				Log.Error( $"Invalid file name!" );
+				Log.Error( $"Invalid Note Name!" );
+				ShowErrorNotice( "Invalid Note Name" );
 			}
 		};
 
-		createNoteDialog.Window.MaximumSize = MaxDialogWindowSize;
+		createNoteDialog.Window.FixedSize = DialogWindowSize;
 		createNoteDialog.Show();
 	}
 
@@ -117,6 +127,9 @@ public class NotepadWidget : Widget
 	#region RIGHT_LAYOUT
 	private void CreateTextEditor()
 	{
+		var labelEditor = RightLayout.Add( new Label( "Editor", this ) );
+		labelEditor.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
+		
 		noteNameLabel = RightLayout.Add( new Label( this ) );
 		noteNameLabel.Text = "Select Note";
 		textEdit = RightLayout.Add(new TextEdit(this) );
@@ -136,6 +149,8 @@ public class NotepadWidget : Widget
 	#region LEFT_LAYOUT
 	private void CreateListView()
 	{
+		var labelNotes = LeftLayout.Add( new Label( "Notes", this ) );
+		labelNotes.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
 		notesListView = LeftLayout.Add( new ListView( this ) );
 		notesListView.SetSizeMode( SizeMode.Ignore, SizeMode.CanGrow );
 		notesListView.MaximumWidth = 180f;
@@ -166,6 +181,9 @@ public class NotepadWidget : Widget
 	}
 	private void CreateRemoveNoteButtons()
 	{
+		var labelActions = LeftLayout.Add( new Label( "Actions", this ) );
+		labelActions.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
+		
 		var createNoteButton = LeftLayout.Add( new Button("Create Note", this));
 		createNoteButton.ToolTip = "Create new note.";
 		createNoteButton.Clicked += CreateNoteDialog;
@@ -203,7 +221,30 @@ public class NotepadWidget : Widget
 
 	private bool IsNoteSelected()
 	{
-		return workingFile == String.Empty;
+		return workingFile != String.Empty;
+	}
+	
+	/// <summary>
+	/// Doesn't work now.
+	/// Seem's like a s&box bug?
+	/// </summary>
+	/// <param name="subtitle"></param>
+	/// <param name="title"></param>
+	private void ShowErrorNotice(string subtitle, string title = "Notepad")
+	{
+		var skip = true;
+
+		Log.Error( $"{title}: {subtitle}" );
+		
+		if ( skip ) return;
+		NoticeWidget notice = new NoticeWidget()
+		{
+			Subtitle = "Testing and testing... I don't want to do that but something makes me to.",
+			Title = "Existence...",
+			Icon = "error",
+			BorderColor = Color.Red,
+			IsRunning = false
+		};
 	}
 	
 	/// <summary>

@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Editor;
 using Sandbox;
 using Sandbox.Services;
@@ -130,8 +132,10 @@ public class NotepadWidget : Widget
 		var labelEditor = RightLayout.Add( new Label( "Editor", this ) );
 		labelEditor.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
 		
+		RightLayout.AddSeparator(2f, Color.Gray);
+		
 		noteNameLabel = RightLayout.Add( new Label( this ) );
-		noteNameLabel.Text = "Select Note";
+		noteNameLabel.Text = "Title";
 		textEdit = RightLayout.Add(new TextEdit(this) );
 	}
 
@@ -151,6 +155,9 @@ public class NotepadWidget : Widget
 	{
 		var labelNotes = LeftLayout.Add( new Label( "Notes", this ) );
 		labelNotes.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
+		
+		LeftLayout.AddSeparator(2f, Color.Gray);
+		
 		notesListView = LeftLayout.Add( new ListView( this ) );
 		notesListView.SetSizeMode( SizeMode.Ignore, SizeMode.CanGrow );
 		notesListView.MaximumWidth = 180f;
@@ -174,15 +181,24 @@ public class NotepadWidget : Widget
 			}
 			
 			noteNameLabel.Text = workingFile;
-			textEdit.PlainText = FileSystem.Data.ReadAllText( FileSystem.NormalizeFilename( $"notes/{workingFile}.txt" ) );
-			saveButton.Enabled = true;
-			removeNoteButton.Enabled = true;
+			ReadNote();
 		};
 	}
+
+	private void ReadNote()
+	{
+		var text = FileSystem.Data.ReadAllText( FileSystem.NormalizeFilename($"notes/{workingFile}.txt" ));
+		textEdit.PlainText = text;
+		saveButton.Enabled = true;
+		removeNoteButton.Enabled = true;
+	}
+	
 	private void CreateRemoveNoteButtons()
 	{
 		var labelActions = LeftLayout.Add( new Label( "Actions", this ) );
 		labelActions.SetSizeMode( SizeMode.Ignore, SizeMode.Ignore );
+
+		LeftLayout.AddSeparator( 2f, Color.Gray );
 		
 		var createNoteButton = LeftLayout.Add( new Button("Create Note", this));
 		createNoteButton.ToolTip = "Create new note.";
